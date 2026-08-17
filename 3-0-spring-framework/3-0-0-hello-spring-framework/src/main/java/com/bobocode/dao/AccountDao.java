@@ -1,6 +1,7 @@
 package com.bobocode.dao;
 
 import com.bobocode.model.Account;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 

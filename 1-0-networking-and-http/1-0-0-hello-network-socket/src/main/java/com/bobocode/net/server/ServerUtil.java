@@ -9,6 +9,7 @@ import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -41,7 +42,7 @@ public class ServerUtil {
      */
     @SneakyThrows
     public static ServerSocket createServerSocket(int port) {
-        throw new ExerciseNotCompletedException(); // todo: implement according to javadoc and verify by ServerUtilTest
+        return new ServerSocket(port); // todo: implement according to javadoc and verify by ServerUtilTest
     }
 
     /**
@@ -52,7 +53,7 @@ public class ServerUtil {
      */
     @SneakyThrows
     public static Socket acceptClientSocket(ServerSocket serverSocket) {
-        throw new ExerciseNotCompletedException(); // todo: implement according to javadoc and verify by ServerUtilTest
+        return serverSocket.accept(); // todo: implement according to javadoc and verify by ServerUtilTest
     }
 
     /**
@@ -66,7 +67,8 @@ public class ServerUtil {
      */
     @SneakyThrows
     public static String readMessageFromSocket(Socket socket) {
-        throw new ExerciseNotCompletedException(); // todo: implement according to javadoc and verify by ServerUtilTest
+        BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
+        return reader.readLine(); // todo: implement according to javadoc and verify by ServerUtilTest
     }
 
     /**

@@ -1,21 +1,53 @@
 package com.bobocode;
 
 import com.bobocode.annotation.Trimmed;
+import org.springframework.aop.framework.ProxyFactory;
+import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.stereotype.Component;
 
-/**
- * This is processor class implements {@link BeanPostProcessor}, looks for a beans where method parameters are marked with
- * {@link Trimmed} annotation, creates proxy of them, overrides methods and trims all {@link String} arguments marked with
- * {@link Trimmed}. For example if there is a string " Java   " as an input parameter it has to be automatically trimmed to "Java"
- * if parameter is marked with {@link Trimmed} annotation.
- * <p>
- *
- * Note! This bean is not marked as a {@link Component} to avoid automatic scanning, instead it should be created in
- * {@link StringTrimmingConfiguration} class which can be imported to a {@link Configuration} class by annotation
- * {@link EnableStringTrimming}
- */
-public class TrimmedAnnotationBeanPostProcessor {
-//todo: Implement TrimmedAnnotationBeanPostProcessor according to javadoc
+import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
+import java.util.Arrays;
+
+public class TrimmedAnnotationBeanPostProcessor implements BeanPostProcessor {
+
+    @Override
+    public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
+        return bean;
+    }
+
+    @Override
+    public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
+        Class<?> beanClass = bean.getClass();
+
+        boolean hasTrimmedParam = Arrays.stream(beanClass.getMethods())
+                .flatMap(m -> Arrays.stream(m.getParameters()))
+                .anyMatch(p -> p.isAnnotationPresent(Trimmed.class));
+
+        if (!hasTrimmedParam) {
+            return bean;
+        }
+
+        ProxyFactory proxyFactory = new ProxyFactory(bean);
+        proxyFactory.addAdvice((org.aopalliance.intercept.MethodInterceptor) invocation -> {
+            Method method = invocation.getMethod();
+            Object[] args = invocation.getArguments();
+
+            if (args != null) {
+                Method targetMethod = beanClass.getMethod(method.getName(), method.getParameterTypes());
+                Parameter[] parameters = targetMethod.getParameters();
+
+                for (int i = 0; i < parameters.length; i++) {
+                    if (parameters[i].isAnnotationPresent(Trimmed.class) && args[i] instanceof String) {
+                        if (args[i] != null) {
+                            args[i] = ((String) args[i]).trim();
+                        }
+                    }
+                }
+            }
+            return invocation.proceed();
+        });
+
+        return proxyFactory.getProxy();
+    }
 }
